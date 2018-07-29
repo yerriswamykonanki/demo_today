@@ -1,0 +1,79 @@
+---
+- name: Check for Updates
+  win_updates: state=searched
+  register: update_count
+
+# Apply pending updates
+- name: Running Windows Update
+  win_updates:
+    category_names:
+      - SecurityUpdates
+      - CriticalUpdates
+      - UpdateRollups
+  register: result
+
+# reboot only if required
+- win_reboot:
+  when: 
+    - result.reboot_required is defined
+    - result.reboot_required
+    - update_count.found_update_count|int >= 1
+  post_reboot_delay: 180
+
+# install IIS
+
+- name: Install IIS (Web-Server only)
+  win_feature:
+    name: Web-Server
+    state: present
+    include_sub_features: yes
+    include_management_tools: yes
+  register: win_feature
+
+# install 4.5.1
+#- name: Install .net framework 4.5.1
+#  win_package:
+#    path: https://download.microsoft.com/download/3/5/9/35980F81-60F4-4DE3-88FC-8F962B97253B/NDP461-KB3102438-Web.exe
+#    product_id: auto
+#    arguments: /q /norestart
+#    - /install 
+#    - /passive 
+#    - /norestart
+
+#- name: Download Microsoft .NET Framework 4.6.1 installer
+#  win_get_url:
+#    url: https://download.microsoft.com/download/3/5/9/35980F81-60F4-4DE3-88FC-8F962B97253B/NDP461-KB3102438-Web.exe
+#    dest: C:\tmp\
+
+#  - name: Unzip Microsoft .NET Framework 4.6.1 installer
+#    win_unzip:
+#      src: C:\tmp\dotnet\dotnet461.zip
+#      dest: C:\tmp\dotnet
+#      rm: true
+
+#- name: Run Microsoft .NET Framework 4.6.1 installer
+#  win_command: NDP461-KB3102438-Web.exe /q /norestart
+#  args:
+#    chdir: C:\tmp\
+#  register: dotnet_install
+- name: Download Microsoft .NET Framework 4.6.1 installer
+  win_get_url:
+   url: https://download.microsoft.com/download/3/5/9/35980F81-60F4-4DE3-88FC-8F962B97253B/NDP461-KB3102438-Web.exe
+   dest: C:\tmp\dotnet\NDP461-KB3102438-Web.exe
+
+- name: Run Microsoft .NET Framework 4.6.1 installer
+  raw: C:\tmp\dotnet\NDP461-KB3102438-Web.exe /q /norestart /log C:\tmp\dotnet\dotnet461\log.txt /x86 /x64 /redist
+  register: dotnet_install
+
+- name: Reboot as required by Microsoft .NET Framework 4.6.1 installer
+  win_reboot:
+
+- name: Check for current Microsoft .NET Framework 4 version
+  win_reg_stat:
+    path: HKLM:\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full
+    name: Version
+  register: dotnet_version
+
+- name: Install Microsoft .NET Framework 4.6.1
+  include: install_dotnet.yml
+  when: dotnet_version.value | version_compare('4.6.01', '<', strict=True)

@@ -1,0 +1,136 @@
+---
+## Checking For windows updates
+#
+#- name: Check for Updates
+#  win_updates: state=searched
+#  register: update_count
+#
+## Apply pending updates
+#
+#- name: Running Windows Update
+#  win_updates:
+#    category_names:
+#      - SecurityUpdates
+#      - CriticalUpdates
+#      - UpdateRollups
+#  register: result
+#
+## reboot only if required
+#
+#- win_reboot:
+#  when: 
+#    - result.reboot_required is defined
+#    - result.reboot_required
+#    - update_count.found_update_count|int >= 1
+#  post_reboot_delay: 180
+#
+### install IIS
+#
+#- name: Install IIS (Web-Server only)
+#  win_feature:
+#    name: Web-Server
+#    state: present
+#    include_sub_features: yes
+#    include_management_tools: yes
+#  register: win_feature
+#
+####Enabling/Disabling windows SMB featurs
+#
+- name: Install/UnInstall SMB in Web-Server
+  win_feature:
+    name: FS-SMB1
+    state: present
+
+#- name: Install only particular updates based on the KB numbers
+#  win_updates:
+#    category_name:
+#    - SecurityUpdates
+#    whitelist:
+#    - KB4019089
+#    - KB4057118
+#    - KB3125869
+
+###Disabling CachedLogonCount on Windows systems
+
+- name: Disabling CachedLogonCount on Windows systems
+  win_regedit:
+    path: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon
+    name: CachedLogonsCount
+    data: 0
+    type: string
+
+###Enabling NLA on Windows systems
+
+- name: Enabling NLA on Windows systems
+  win_regedit:
+    path: HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp
+    name: UserAuthentication
+    data: 1
+    type: dword
+
+
+###Changing Minimum password Length
+- name: Set the Minimum password Length
+  win_security_policy:
+    section: System Access
+    key: MinimumPasswordLength
+    value: 8
+
+###Making administrator password expires or not
+- name: Making administrator password never expire
+  win_user:
+    name: Administrator
+    password_never_expires: yes
+
+###Changing guest account name
+- name: change the guest account name
+  win_security_policy:
+    section: System Access
+    key: NewGuestName
+    value: test
+
+###Changing password expire date for system policy
+- name: Set the minimum password age
+  win_security_policy:
+    section: System Access
+    key: MinimumPasswordAge
+    value: 0
+
+###creating Directory for downloads
+#- name: Create directory structure
+#  win_file:
+#    path: C:\tmp\dotnet
+#    state: directory
+#
+###Downloading the .NET Framework 4.6.1 installer
+#- name: Download Microsoft .NET Framework 4.6.1 installer
+#  win_get_url:
+#   url: https://download.microsoft.com/download/3/5/9/35980F81-60F4-4DE3-88FC-8F962B97253B/NDP461-KB3102438-Web.exe
+#   dest: C:\tmp\dotnet\NDP461-KB3102438-Web.exe
+#
+#- name: Run Microsoft .NET Framework 4.6.1 installer
+#  raw: C:\tmp\dotnet\NDP461-KB3102438-Web.exe /q /norestart /log C:\tmp\dotnet\dotnet461\log.txt /x86 /x64 /redist
+#  register: dotnet_install
+#
+#- name: Reboot as required by Microsoft .NET Framework 4.6.1 installer
+#  win_reboot:
+#
+#- name: Check for current Microsoft .NET Framework 4 version
+#  win_reg_stat:
+#    path: HKLM:\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full
+#    name: Version
+#  register: dotnet_version
+
+#############for 3rd task
+
+###Enabling NLA on Windows systems
+
+#- name: Disabling SSLV3.0, TLS 1.0 TLS 1.1 in windows systems
+#  win_regedit:
+#    path: HKey_Local_Machine\System\CurrentControlSet\Control\SecurityProviders\SCHANNE L\Protocols
+#    name: UserAuthentication
+#    data: 1
+#    type: dword
+
+
+

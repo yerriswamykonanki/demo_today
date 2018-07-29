@@ -1,0 +1,53 @@
+---
+- name: Check for Updates
+  win_updates: state=searched
+  register: update_count
+
+# Apply pending updates
+- name: Running Windows Update
+  win_updates:
+    category_names:
+      - SecurityUpdates
+      - CriticalUpdates
+      - UpdateRollups
+  register: result
+
+# reboot only if required
+- win_reboot:
+  when: 
+    - result.reboot_required is defined
+    - result.reboot_required
+    - update_count.found_update_count|int >= 1
+  post_reboot_delay: 180
+
+# install IIS
+
+- name: Install IIS (Web-Server only)
+  win_feature:
+    name: Web-Server
+    state: present
+    include_sub_features: yes
+    include_management_tools: yes
+  register: win_feature
+
+# install 4.5.1
+#- name: Install .net framework 4.5.1
+#  win_package:
+#    path: https://download.microsoft.com/download/3/5/9/35980F81-60F4-4DE3-88FC-8F962B97253B/NDP461-KB3102438-Web.exe
+#    product_id: auto
+#    arguments: /q /norestart
+#    - /install 
+#    - /passive 
+#    - /norestart
+
+- name: Enable .NET Windows features
+  win_feature:
+    name: as-net-framework, web-asp-net45
+    state: present
+
+- name: Install .NET framework
+  win_package:
+    path: https://download.microsoft.com/download/3/5/9/35980F81-60F4-4DE3-88FC-8F962B97253B/NDP461-KB3102438-Web.exe
+    product_id: dotnetframework4.5
+    state: present
+    arguments: /q /norestart

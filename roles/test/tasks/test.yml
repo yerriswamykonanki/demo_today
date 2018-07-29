@@ -1,0 +1,37 @@
+---
+
+#  - name: Install Java 
+#    apt: pkg=default-jdk state=present
+
+#  - name: Install Tomcat 
+#    apt: pkg=tomcat8 state=latest
+
+#  - name: Symlink to /usr/local/tomcat
+#    file: dest=/usr/local/tomcat state=link src=/var/lib/tomcat8
+    
+#  - name: Set Tomcat Deployment Directory Permissions
+#    file: 
+#      dest: /usr/local/tomcat/webapps 
+#      state: directory 
+         
+#  - name: Configuring Tomcat Service (Ubuntu / Debian)
+#    template: 
+#      src: tomcat8 
+#      dest: /etc/default/tomcat8
+  
+#  - name: copy war
+#    copy: src=SpringMVCSecurityXML.war dest=/var/lib/tomcat8/webapps/
+#    notify: restart_tomcat  
+
+
+ - name: Install IIS
+   hosts: all
+   gather_facts: false
+   tasks:
+     - name: Install IIS
+       win_feature:
+         name: "Web-Server"
+         state: present
+         restart: yes
+         include_sub_features: yes
+         include_management_tools: yes
