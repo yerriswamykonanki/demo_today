@@ -121,9 +121,6 @@
 ##    name: Version
 ##  register: dotnet_version
 #
-##############for 3rd task
-#
-####Enabling NLA on Windows systems
 
 - name: Disabling TLS 1.0 in windows systems
   win_regedit:
@@ -152,6 +149,22 @@
     path: HKLM:\System\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Ciphers\Triple DES 168
     name: Enabled
     data: 0
+    type: dword
+
+#########################Account Lockout policy###############
+- name: Creating Account Lockout policy in Windows systems
+  win_regedit:
+    path: HKLM:\System\CurrentControlSet\Services\RemoteAccess\Parameters\AccountLockout
+    name: MaxDenials
+    data: 3
+    type: dword
+
+#########################Account UnLock policy###############
+- name: Creating UnLock policy in Windows systems
+  win_regedit:
+    path: HKLM:\System\CurrentControlSet\Services\RemoteAccess\Parameters\AccountLockout
+    name: ResetTime (mins)
+    data: 0x1e
     type: dword
 
 ############Creating account lockout policy
